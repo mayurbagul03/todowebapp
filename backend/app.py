@@ -1,8 +1,8 @@
 import os
 import psycopg2
 from dotenv import load_dotenv
-from flask import Flask, send_from_directory, request, jsonify
-from werkzeug.security import generate_password_hash
+from flask import Flask, send_from_directory, request, jsonify, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # load_dotenv("key.env")   # without this, key.env is never read!
 load_dotenv(os.path.join(os.path.dirname(__file__), "key.env"))
@@ -16,6 +16,32 @@ def get_db():
         password=os.getenv("DB_PASSWORD", ""),
         dbname=os.getenv("DB_NAME", "todo"),
     )
+
+@app.post("/api/login")
+def login():
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not username or not password:
+        return jsonify(error="Enter username and password"), 400
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT user_id, first_name, password_hash FROM users WHERE username = %s",
+                (username,),
+            )
+            row = cur.fetchone()
+    finally:
+        conn.close()
+
+    if row is None or not check_password_hash(row[2], password):
+        return jsonify(error="Invalid username or password"), 401
+
+    session["user_id"] = row[0]          # this is the "remember me" moment
+    return jsonify(user_id=row[0], first_name=row[1])
 
 @app.post("/api/register")
 def register():
@@ -49,7 +75,17 @@ def register():
     finally:
         conn.close()
 
+@app.post("/api/logout")
+def logout():
+    session.clear()
+    return jsonify(message="Logged out")
 
+@app.get("/api/me")
+def me():
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify(error="Not logged in"), 401
+    return jsonify(user_id=user_id)
 
 @app.get("/")
 def index():

@@ -40,48 +40,23 @@
     </main>
 
     <script>
-      const msg = document.getElementById("msg");
-      const btn = document.getElementById("submitBtn");
-
-      function show(text, type) {
-        msg.textContent = text;
-        msg.className = "msg " + type;
-      }
-
-      document
-        .getElementById("loginForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-
-          const username = document.getElementById("username").value.trim();
-          const password = document.getElementById("password").value;
-
-          btn.disabled = true;
-          try {
-            const res = await fetch("/api/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username, password }),
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-              // success -> go to the todo list page
-              location.href = "todos.html";
-            } else if (data.code === "USER_NOT_FOUND") {
-              // username not in db -> tell them, then send to register
-              show(data.error + " — taking you to the register page…", "error");
-              setTimeout(() => (location.href = "register.html"), 2000);
-            } else {
-              // wrong password etc -> show error, stay here
-              show(data.error || "Login failed.", "error");
-            }
-          } catch {
-            show("Cannot reach the server. Is app.py running?", "error");
-          } finally {
-            btn.disabled = false;
-          }
+      async function handleLogin(event) {
+        event.preventDefault();
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+          }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          window.location.href = "/dashboard.html";
+        } else {
+          document.getElementById("error").textContent = data.error;
+        }
+      }
     </script>
   </body>
 </html>
