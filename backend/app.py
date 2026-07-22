@@ -50,10 +50,6 @@ def register():
         conn.close()
 
 
-# if __name__ == "__main__":
-#     conn = get_db()
-#     print("Connected to database successfully!")
-#     conn.close()
 
 @app.get("/")
 def index():
