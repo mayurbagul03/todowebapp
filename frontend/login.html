@@ -17,7 +17,7 @@
 
       <div class="msg" id="msg"></div>
 
-      <form id="loginForm">
+      <form id="loginForm" onsubmit="handleLogin(event)">
         <div>
           <label for="username">Username</label>
           <input type="text" id="username" required autocomplete="username" />
@@ -54,7 +54,7 @@
         if (res.ok) {
           window.location.href = "/dashboard.html";
         } else {
-          document.getElementById("error").textContent = data.error;
+          document.getElementById("msg").textContent = data.error;
         }
       }
     </script>
